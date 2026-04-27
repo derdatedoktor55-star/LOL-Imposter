@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LoL Imposter</title>
+    <meta name="theme-color" content="#111318" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="LoL Imposter" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" />
+    <link rel="apple-touch-icon" href="icon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">League Party Game</p>
+          <h1>LoL Imposter</h1>
+        </div>
+        <button id="resetButton" class="icon-button" type="button" title="Neue Runde">↻</button>
+      </section>
+
+      <section id="setupScreen" class="screen active">
+        <div class="panel intro">
+          <h2>Runde vorbereiten</h2>
+          <p>Alle bekommen denselben Champion. Nur der Imposter bekommt stattdessen einen Hinweis.</p>
+        </div>
+
+        <div class="panel">
+          <label for="playerCount">Spieler</label>
+          <div class="stepper">
+            <button type="button" data-step="-1" aria-label="Weniger Spieler">−</button>
+            <input id="playerCount" type="number" min="3" max="12" value="5" />
+            <button type="button" data-step="1" aria-label="Mehr Spieler">+</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="row">
+            <label for="imposterCount">Imposter</label>
+            <select id="imposterCount">
+              <option value="1">1 Imposter</option>
+              <option value="2">2 Imposter</option>
+              <option value="3">3 Imposter</option>
+            </select>
+          </div>
+          <div class="row">
+            <label for="hintMode">Hinweis</label>
+            <select id="hintMode">
+              <option value="normal">Ausgeglichen</option>
+              <option value="vague">Schwer</option>
+              <option value="kind">Leichter</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="playerNames" class="names"></div>
+
+        <button id="startButton" class="primary" type="button">Spiel starten</button>
+        <p id="dataStatus" class="status">Championliste wird geladen...</p>
+      </section>
+
+      <section id="passScreen" class="screen">
+        <div class="panel center">
+          <p class="eyebrow">Handy weitergeben</p>
+          <h2 id="passName">Spieler</h2>
+          <p>Nur diese Person darf gleich schauen.</p>
+          <button id="revealButton" class="primary" type="button">Meine Karte anzeigen</button>
+        </div>
+      </section>
+
+      <section id="cardScreen" class="screen">
+        <article id="roleCard" class="role-card">
+          <div class="card-glow"></div>
+          <p id="roleLabel" class="eyebrow">Deine Rolle</p>
+          <img id="championImage" alt="" />
+          <h2 id="roleTitle">Champion</h2>
+          <p id="roleText">Text</p>
+          <button id="hideButton" class="primary" type="button">Verstanden, weitergeben</button>
+        </article>
+      </section>
+
+      <section id="talkScreen" class="screen">
+        <div class="panel intro">
+          <p class="eyebrow">Diskussion</p>
+          <h2>Findet den Imposter</h2>
+          <p>Reihum Fragen stellen. Niemand darf den Championnamen direkt sagen.</p>
+        </div>
+        <div class="panel">
+          <div class="timer">
+            <span id="timerText">03:00</span>
+            <div>
+              <button id="timerButton" type="button">Start</button>
+              <button id="timerResetButton" type="button">Reset</button>
+            </div>
+          </div>
+        </div>
+        <button id="voteButton" class="primary" type="button">Zur Abstimmung</button>
+      </section>
+
+      <section id="voteScreen" class="screen">
+        <div class="panel intro">
+          <p class="eyebrow">Abstimmung</p>
+          <h2>Wer war verdächtig?</h2>
+          <p>Tippt auf eine Person und deckt dann die Lösung auf.</p>
+        </div>
+        <div id="voteList" class="vote-list"></div>
+        <button id="showResultButton" class="primary" type="button">Lösung anzeigen</button>
+      </section>
+
+      <section id="resultScreen" class="screen">
+        <div class="panel result">
+          <p class="eyebrow">Auflösung</p>
+          <img id="resultImage" alt="" />
+          <h2 id="resultChampion">Champion</h2>
+          <p id="resultImposters">Imposter</p>
+          <button id="againButton" class="primary" type="button">Neue Runde</button>
+        </div>
+      </section>
+    </main>
+    <script src="app.js"></script>
+    <script>
+      if ("serviceWorker" in navigator && location.protocol !== "file:") {
+        navigator.serviceWorker.register("sw.js");
+      }
+    </script>
+  </body>
+</html>
