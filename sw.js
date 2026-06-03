@@ -1,4 +1,4 @@
-const CACHE_NAME = "lol-imposter-v1";
+const CACHE_NAME = "lol-imposter-v2";
 const APP_FILES = [
   "./",
   "./index.html",

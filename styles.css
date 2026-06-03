@@ -109,6 +109,10 @@ h2 {
   line-height: 1.45;
 }
 
+.role-card p {
+  white-space: pre-line;
+}
+
 .center {
   display: grid;
   min-height: 58vh;

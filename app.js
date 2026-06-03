@@ -12,6 +12,26 @@ const CHAMPION_FALLBACK = [
   { id: "MissFortune", name: "Miss Fortune", title: "the Bounty Hunter", tags: ["Marksman"], partype: "Mana", info: { attack: 8, defense: 2, magic: 5, difficulty: 1 }, image: { full: "MissFortune.png" } }
 ];
 
+const REGION_GROUPS = {
+  Demacia: ["Fiora", "Galio", "Garen", "JarvanIV", "Kayle", "Lucian", "Lux", "Morgana", "Poppy", "Quinn", "Shyvana", "Sona", "Sylas", "Vayne", "XinZhao"],
+  Ionia: ["Ahri", "Akali", "Hwei", "Irelia", "Ivern", "Jhin", "Karma", "Kayn", "Kennen", "LeeSin", "Lillia", "MasterYi", "Rakan", "Sett", "Shen", "Syndra", "Varus", "Wukong", "Xayah", "Yasuo", "Yone", "Zed"],
+  Noxus: ["Ambessa", "Briar", "Cassiopeia", "Darius", "Draven", "Katarina", "Kled", "Leblanc", "Mordekaiser", "Rell", "Riven", "Samira", "Sion", "Swain", "Talon", "Vladimir"],
+  Freljord: ["Anivia", "Ashe", "Aurora", "Braum", "Gnar", "Gragas", "Lissandra", "Nunu", "Olaf", "Ornn", "Sejuani", "Trundle", "Tryndamere", "Udyr", "Volibear"],
+  "Piltover/Zaun": ["Blitzcrank", "Caitlyn", "Camille", "DrMundo", "Ekko", "Ezreal", "Heimerdinger", "Janna", "Jayce", "Jinx", "Orianna", "Renata", "Seraphine", "Singed", "Twitch", "Urgot", "Vi", "Viktor", "Warwick", "Zac", "Zeri", "Ziggs"],
+  Shurima: ["Akshan", "Amumu", "Azir", "Kaisa", "Kassadin", "Malzahar", "Naafiri", "Nasus", "Qiyana", "Rammus", "Renekton", "Sivir", "Skarner", "Taliyah", "Xerath"],
+  Targon: ["Aphelios", "AurelionSol", "Diana", "Leona", "Pantheon", "Soraka", "Taric", "Zoe"],
+  Bilgewater: ["Fizz", "Gangplank", "Graves", "Illaoi", "MissFortune", "Nautilus", "Nilah", "Pyke", "TahmKench", "TwistedFate"],
+  "Shadow Isles": ["Elise", "Gwen", "Hecarim", "Kalista", "Karthus", "Maokai", "Senna", "Thresh", "Vex", "Viego", "Yorick"],
+  "Bandle City": ["Corki", "Lulu", "Rumble", "Teemo", "Tristana", "Veigar", "Yuumi"],
+  Void: ["Belveth", "Chogath", "Kaisa", "Kassadin", "Khazix", "KogMaw", "Malzahar", "RekSai", "Velkoz"],
+  Ixtal: ["Malphite", "Milio", "Neeko", "Nidalee", "Qiyana", "Rengar", "Zyra"],
+  Runeterra: ["Aatrox", "Alistar", "Annie", "Bard", "Brand", "Evelynn", "Fiddlesticks", "Kindred", "Nocturne", "Ryze", "Shaco", "Smolder", "TahmKench", "Zilean"]
+};
+
+const REGION_BY_ID = Object.fromEntries(
+  Object.entries(REGION_GROUPS).flatMap(([region, ids]) => ids.map((id) => [id, region]))
+);
+
 const state = {
   champions: CHAMPION_FALLBACK,
   dataVersion: DATA_VERSION_FALLBACK,
@@ -94,26 +114,97 @@ function collectPlayers() {
   return [...els.playerNames.querySelectorAll("input")].map((input, index) => input.value.trim() || `Spieler ${index + 1}`);
 }
 
-function makeHint(champion) {
-  const tags = champion.tags?.length ? champion.tags.join(" / ") : "flexibel";
-  const resource = champion.partype && champion.partype !== "None" ? champion.partype : "keine klassische Ressource";
-  const magic = champion.info?.magic ?? 5;
+function likelyLane(tags = []) {
+  const tagSet = new Set(tags);
+  if (tagSet.has("Marksman") && tagSet.has("Support")) return "Bot oder Support";
+  if (tagSet.has("Marksman")) return "Bot-Lane / ADC-Vibe";
+  if (tagSet.has("Support") && tagSet.has("Mage")) return "Support oder Mid";
+  if (tagSet.has("Support")) return "Support-Vibe";
+  if (tagSet.has("Assassin") && tagSet.has("Fighter")) return "Jungle oder Solo-Lane";
+  if (tagSet.has("Assassin")) return "Mid oder Jungle";
+  if (tagSet.has("Mage")) return "Mid-Lane / AP-Vibe";
+  if (tagSet.has("Tank") && tagSet.has("Fighter")) return "Top oder Jungle";
+  if (tagSet.has("Tank")) return "Frontline / Engage";
+  if (tagSet.has("Fighter")) return "Top-Lane / Duelist-Vibe";
+  return "flexibel";
+}
+
+function championStyle(champion) {
+  const tags = champion.tags || [];
+  const tagSet = new Set(tags);
   const attack = champion.info?.attack ?? 5;
+  const defense = champion.info?.defense ?? 5;
+  const magic = champion.info?.magic ?? 5;
+
+  if (tagSet.has("Support") && magic >= 6) return "Utility, Kontrolle oder Schutz";
+  if (tagSet.has("Tank") && defense >= 6) return "Frontline, Engage oder Aushalten";
+  if (tagSet.has("Assassin") && attack >= 6) return "Burst, Flankieren oder Picks";
+  if (tagSet.has("Marksman")) return "Reichweite und Schaden pro Sekunde";
+  if (tagSet.has("Mage") && magic >= 7) return "Zauber, Poke oder Kontrolle";
+  if (tagSet.has("Fighter")) return "Duell, All-in oder Nahkampf-Druck";
+  if (magic > attack + 2) return "magischer Spielstil";
+  if (attack > magic + 2) return "physischer Spielstil";
+  return "gemischter Spielstil";
+}
+
+function difficultyLabel(value) {
+  if (value >= 8) return "schwer";
+  if (value <= 3) return "einsteigerfreundlich";
+  return "mittel";
+}
+
+function makeTalkAnchor(champion) {
+  const tagSet = new Set(champion.tags || []);
+  if (tagSet.has("Support")) return "Schutz, Engage, Peel, Vision";
+  if (tagSet.has("Marksman")) return "Reichweite, Scaling, Positioning";
+  if (tagSet.has("Assassin")) return "Burst, Flanken, Squishies";
+  if (tagSet.has("Tank")) return "Frontline, CC, Teamfight";
+  if (tagSet.has("Mage")) return "Poke, Zonen, Cooldowns";
+  if (tagSet.has("Fighter")) return "Duell, Splitpush, All-in";
+  return "Teamfight, Timing, Risiko";
+}
+
+function makeHint(champion) {
+  const tags = champion.tags?.length ? champion.tags.join(" + ") : "flexibel";
+  const resource = champion.partype && champion.partype !== "None" ? champion.partype : "keine Mana-Leiste";
   const difficulty = champion.info?.difficulty ?? 5;
   const mode = els.hintMode.value;
-
-  const damageHint = magic > attack + 2 ? "eher magisch" : attack > magic + 2 ? "eher körperlich" : "gemischt im Schaden";
-  const skillHint = difficulty >= 8 ? "mechanisch anspruchsvoll" : difficulty <= 3 ? "relativ leicht zu verstehen" : "mittelschwer";
+  const region = REGION_BY_ID[champion.id] || "Runeterra";
+  const lane = likelyLane(champion.tags);
+  const style = championStyle(champion);
+  const skillHint = difficultyLabel(difficulty);
+  const talkAnchor = makeTalkAnchor(champion);
 
   if (mode === "vague") {
-    return `Hinweis: Der Champion ist ${damageHint} und gehört grob in diese Richtung: ${tags.split(" / ")[0]}.`;
+    return [
+      "Splash-Hinweis:",
+      `Thema: ${style}`,
+      `Lane-Vibe: ${lane}`,
+      `Sicheres Gesprächsthema: ${talkAnchor}`
+    ].join("\n");
   }
 
   if (mode === "kind") {
-    return `Hinweis: ${tags}, ${damageHint}, nutzt ${resource}, und ist ${skillHint}.`;
+    return [
+      "Splash-Hinweis:",
+      `Region/Fraktion: ${region}`,
+      `Typ: ${tags}`,
+      `Lane-Vibe: ${lane}`,
+      `Spielstil: ${style}`,
+      `Ressource: ${resource}`,
+      `Schwierigkeit: ${skillHint}`,
+      `Sicheres Gesprächsthema: ${talkAnchor}`
+    ].join("\n");
   }
 
-  return `Hinweis: ${damageHint}, oft ${tags}, mit ${resource}.`;
+  return [
+    "Splash-Hinweis:",
+    `Region/Fraktion: ${region}`,
+    `Typ: ${tags}`,
+    `Lane-Vibe: ${lane}`,
+    `Spielstil: ${style}`,
+    `Sicheres Gesprächsthema: ${talkAnchor}`
+  ].join("\n");
 }
 
 function startGame() {
